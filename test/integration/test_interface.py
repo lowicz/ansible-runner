@@ -41,17 +41,18 @@ def test_run_async(tmp_path):
 
 def get_env_data(res):
     for event in res.events:
-        found = bool(
-            event['event'] in ('runner_on_ok', 'runner_on_start', 'playbook_on_task_start') and event.get(
-                'event_data', {}
-            ).get('task_action', None) == 'look_at_environment'
+        found = (
+            event['event']
+            in ('runner_on_ok', 'runner_on_start', 'playbook_on_task_start')
+            and event.get('event_data', {}).get('task_action', None)
+            == 'look_at_environment'
         )
+
         if found and 'res' in event['event_data']:
             return event['event_data']['res']
-    else:
-        print('output:')
-        print(res.stdout.read())
-        raise RuntimeError('Count not find look_at_environment task from playbook')
+    print('output:')
+    print(res.stdout.read())
+    raise RuntimeError('Count not find look_at_environment task from playbook')
 
 
 def test_env_accuracy(request, project_fixtures):
@@ -243,7 +244,7 @@ def test_run_ansible_command_within_container(project_fixtures, runtime):
 def test_run_script_within_container(project_fixtures, runtime):
     private_data_dir = project_fixtures / 'debug'
     script_path = project_fixtures / 'files'
-    container_volume_mounts = ["{}:{}:Z".format(script_path, script_path)]
+    container_volume_mounts = [f"{script_path}:{script_path}:Z"]
     container_kwargs = {
         'process_isolation_executable': runtime,
         'process_isolation': True,

@@ -93,24 +93,20 @@ def init_runner(**kwargs):
         cancel_callback = signal_handler()
     finished_callback = kwargs.pop('finished_callback', None)
 
-    streamer = kwargs.pop('streamer', None)
-    if streamer:
+    if streamer := kwargs.pop('streamer', None):
         if streamer == 'transmit':
-            stream_transmitter = Transmitter(**kwargs)
-            return stream_transmitter
-
+            return Transmitter(**kwargs)
         if streamer == 'worker':
-            stream_worker = Worker(**kwargs)
-            return stream_worker
-
+            return Worker(**kwargs)
         if streamer == 'process':
-            stream_processor = Processor(event_handler=event_callback_handler,
-                                         status_handler=status_callback_handler,
-                                         artifacts_handler=artifacts_handler,
-                                         cancel_callback=cancel_callback,
-                                         finished_callback=finished_callback,
-                                         **kwargs)
-            return stream_processor
+            return Processor(
+                event_handler=event_callback_handler,
+                status_handler=status_callback_handler,
+                artifacts_handler=artifacts_handler,
+                cancel_callback=cancel_callback,
+                finished_callback=finished_callback,
+                **kwargs
+            )
 
     if kwargs.get("process_isolation", False):
         pi_executable = kwargs.get("process_isolation_executable", "podman")

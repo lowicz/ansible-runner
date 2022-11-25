@@ -131,12 +131,15 @@ def test_no_dst_all_dirs(path, labels, mocker):
     )
 
     explanation = (
-        f"provided: {path.path}:{None}",
+        f"provided: {path.path}:None",
         f"got: {result}",
         f"expected {expected}",
     )
+
     assert result == expected, explanation
-    assert all(part.endswith('/') for part in result[1].split(':')[0:1]), explanation
+    assert all(
+        part.endswith('/') for part in result[1].split(':')[:1]
+    ), explanation
 
 
 @pytest.mark.parametrize("labels", labels, ids=id_for_label)
@@ -161,7 +164,9 @@ def test_src_dst_all_dirs(src, dst, labels, mocker):
         f"expected {expected}",
     )
     assert result == expected, explanation
-    assert all(part.endswith('/') for part in result[1].split(':')[0:1]), explanation
+    assert all(
+        part.endswith('/') for part in result[1].split(':')[:1]
+    ), explanation
 
 
 @pytest.mark.parametrize("labels", labels, ids=id_for_label)
@@ -189,7 +194,9 @@ def test_src_dst_all_files(path, labels, mocker):
         f"expected {expected}",
     )
     assert result == expected, explanation
-    assert all(part.endswith('/') for part in result[1].split(':')[0:1]), explanation
+    assert all(
+        part.endswith('/') for part in result[1].split(':')[:1]
+    ), explanation
 
 
 @pytest.mark.parametrize("relative", (".", "..", "../.."))
@@ -218,4 +225,6 @@ def test_src_dst_all_relative_dirs(src, dst, labels, relative, mocker):
         f"expected {expected}",
     )
     assert result == expected, explanation
-    assert all(part.endswith('/') for part in result[1].split(':')[0:1]), explanation
+    assert all(
+        part.endswith('/') for part in result[1].split(':')[:1]
+    ), explanation

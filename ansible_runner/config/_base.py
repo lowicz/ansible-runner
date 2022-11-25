@@ -111,17 +111,12 @@ class BaseConfig(object):
         else:
             artifact_dir = os.path.abspath(artifact_dir)
 
-        if ident is None:
-            self.ident = str(uuid4())
-        else:
-            self.ident = ident
+        self.ident = str(uuid4()) if ident is None else ident
+        self.artifact_dir = os.path.join(artifact_dir, f"{self.ident}")
 
-        self.artifact_dir = os.path.join(artifact_dir, "{}".format(self.ident))
-
-        if not project_dir:
-            self.project_dir = os.path.join(self.private_data_dir, 'project')
-        else:
-            self.project_dir = project_dir
+        self.project_dir = project_dir or os.path.join(
+            self.private_data_dir, 'project'
+        )
 
         self.rotate_artifacts = rotate_artifacts
         self.fact_cache_type = fact_cache_type
@@ -156,7 +151,7 @@ class BaseConfig(object):
                 self.settings = self.loader.load_file('env/settings', Mapping)
         except ConfigurationError:
             debug("Not loading settings")
-            self.settings = dict()
+            self.settings = {}
 
         if self.runner_mode == 'pexpect':
             try:
@@ -167,7 +162,7 @@ class BaseConfig(object):
             except ConfigurationError:
                 debug('Not loading passwords')
 
-            self.expect_passwords = dict()
+            self.expect_passwords = {}
             try:
                 if self.passwords:
                     self.expect_passwords = {
@@ -175,7 +170,7 @@ class BaseConfig(object):
                         for pattern, password in iteritems(self.passwords)
                     }
             except Exception as e:
-                debug('Failed to compile RE from passwords: {}'.format(e))
+                debug(f'Failed to compile RE from passwords: {e}')
 
             self.expect_passwords[pexpect.TIMEOUT] = None
             self.expect_passwords[pexpect.EOF] = None
@@ -184,18 +179,18 @@ class BaseConfig(object):
             self.pexpect_use_poll = self.settings.get('pexpect_use_poll', True)
             self.pexpect_timeout = self.settings.get('pexpect_timeout', 5)
             self.pexpect_use_poll = self.settings.get('pexpect_use_poll', True)
-            self.idle_timeout = self.settings.get('idle_timeout', None)
+            self.idle_timeout = self.settings.get('idle_timeout')
 
             if self.timeout:
                 self.job_timeout = int(self.timeout)
             else:
-                self.job_timeout = self.settings.get('job_timeout', None)
+                self.job_timeout = self.settings.get('job_timeout')
 
         elif self.runner_mode == 'subprocess':
             if self.timeout:
                 self.subprocess_timeout = int(self.timeout)
             else:
-                self.subprocess_timeout = self.settings.get('subprocess_timeout', None)
+                self.subprocess_timeout = self.settings.get('subprocess_timeout')
 
         self.process_isolation = self.settings.get('process_isolation', self.process_isolation)
         self.process_isolation_executable = self.settings.get('process_isolation_executable', self.process_isolation_executable)
@@ -206,7 +201,7 @@ class BaseConfig(object):
         self.container_auth_data = self.settings.get('container_auth_data', self.container_auth_data)
 
         if self.containerized:
-            self.container_name = "ansible_runner_{}".format(sanitize_container_name(self.ident))
+            self.container_name = f"ansible_runner_{sanitize_container_name(self.ident)}"
             self.env = {}
 
             if self.process_isolation_executable == 'podman':
@@ -220,7 +215,7 @@ class BaseConfig(object):
                 #    https://issues.redhat.com/browse/AAP-476
                 self.env['ANSIBLE_UNSAFE_WRITES'] = '1'
 
-            artifact_dir = os.path.join("/runner/artifacts", "{}".format(self.ident))
+            artifact_dir = os.path.join("/runner/artifacts", f"{self.ident}")
             self.env['AWX_ISOLATED_DATA_DIR'] = artifact_dir
             if self.fact_cache_type == 'jsonfile':
                 self.env['ANSIBLE_CACHE_PLUGIN_CONNECTION'] = os.path.join(artifact_dir, 'fact_cache')
@@ -233,8 +228,7 @@ class BaseConfig(object):
             self.env.update(self.envvars)
 
         try:
-            envvars = self.loader.load_file('env/envvars', Mapping)
-            if envvars:
+            if envvars := self.loader.load_file('env/envvars', Mapping):
                 self.env.update(envvars)
         except ConfigurationError:
             debug("Not loading environment vars")
@@ -255,13 +249,12 @@ class BaseConfig(object):
         self.suppress_output_file = self.settings.get('suppress_output_file', False)
         self.suppress_ansible_output = self.settings.get('suppress_ansible_output', self.quiet)
 
-        if 'fact_cache' in self.settings:
-            if 'fact_cache_type' in self.settings:
-                if self.settings['fact_cache_type'] == 'jsonfile':
-                    self.fact_cache = os.path.join(self.artifact_dir, self.settings['fact_cache'])
-            else:
-                self.fact_cache = os.path.join(self.artifact_dir, self.settings['fact_cache'])
-
+        if 'fact_cache' in self.settings and (
+            'fact_cache_type' in self.settings
+            and self.settings['fact_cache_type'] == 'jsonfile'
+            or 'fact_cache_type' not in self.settings
+        ):
+            self.fact_cache = os.path.join(self.artifact_dir, self.settings['fact_cache'])
         # Use local callback directory
         if self.containerized:
             # when containerized, copy the callback dir to $private_data_dir/artifacts/<job_id>/callback
@@ -272,7 +265,10 @@ class BaseConfig(object):
                 shutil.rmtree(callback_dir)
             shutil.copytree(get_callback_dir(), callback_dir)
 
-            container_callback_dir = os.path.join("/runner/artifacts", "{}".format(self.ident), "callback")
+            container_callback_dir = os.path.join(
+                "/runner/artifacts", f"{self.ident}", "callback"
+            )
+
             self.env['ANSIBLE_CALLBACK_PLUGINS'] = ':'.join(filter(None, (self.env.get('ANSIBLE_CALLBACK_PLUGINS'), container_callback_dir)))
         else:
             callback_dir = self.env.get('AWX_LIB_DIRECTORY', os.getenv('AWX_LIB_DIRECTORY'))
@@ -281,7 +277,11 @@ class BaseConfig(object):
             self.env['ANSIBLE_CALLBACK_PLUGINS'] = ':'.join(filter(None, (self.env.get('ANSIBLE_CALLBACK_PLUGINS'), callback_dir)))
 
         # this is an adhoc command if the module is specified, TODO: combine with logic in RunnerConfig class
-        is_adhoc = bool((getattr(self, 'binary', None) is None) and (getattr(self, 'module', None) is not None))
+        is_adhoc = (
+            getattr(self, 'binary', None) is None
+            and getattr(self, 'module', None) is not None
+        )
+
 
         if self.env.get('ANSIBLE_STDOUT_CALLBACK'):
             self.env['ORIGINAL_STDOUT_CALLBACK'] = self.env.get('ANSIBLE_STDOUT_CALLBACK')
@@ -346,11 +346,8 @@ class BaseConfig(object):
                     # to return correct error from ansible-core
                     return None
 
-        if len(_book_keeping_copy) == 1:
+        if len(_book_keeping_copy) == 1 or _book_keeping_copy[0][0] != '-':
             # it's probably safe to assume this is the playbook
-            _playbook = _book_keeping_copy[0]
-        elif _book_keeping_copy[0][0] != '-':
-            # this should be the playbook, it's the only "naked" arg
             _playbook = _book_keeping_copy[0]
         else:
             # parse everything beyond the first arg because we checked that
@@ -402,7 +399,7 @@ class BaseConfig(object):
         self._ensure_path_safe_to_mount(dst_dir)
 
         # format the src dest str
-        volume_mount_path = "{}:{}".format(src_dir, dst_dir)
+        volume_mount_path = f"{src_dir}:{dst_dir}"
 
         # add labels as needed
         if labels:
@@ -429,8 +426,7 @@ class BaseConfig(object):
 
         for value in self.command:
             if 'ansible-playbook' in value:
-                playbook_file_path = self._get_playbook_path(cmdline_args)
-                if playbook_file_path:
+                if playbook_file_path := self._get_playbook_path(cmdline_args):
                     self._update_volume_mount_paths(args_list, playbook_file_path)
                     break
 
@@ -458,9 +454,7 @@ class BaseConfig(object):
             self._update_volume_mount_paths(args_list, optional_arg_value)
 
     def wrap_args_for_containerization(self, args, execution_mode, cmdline_args):
-        new_args = [self.process_isolation_executable]
-        new_args.extend(['run', '--rm'])
-
+        new_args = [self.process_isolation_executable, 'run', '--rm']
         if self.runner_mode == 'pexpect' or hasattr(self, 'input_fd') and self.input_fd is not None:
             new_args.extend(['--tty'])
 
@@ -490,10 +484,7 @@ class BaseConfig(object):
             self._handle_automounts(new_args)
 
             if 'podman' in self.process_isolation_executable:
-                # container namespace stuff
-                new_args.extend(["--group-add=root"])
-                new_args.extend(["--ipc=host"])
-
+                new_args.extend(["--group-add=root", "--ipc=host"])
             self._ensure_path_safe_to_mount(self.private_data_dir)
             # Relative paths are mounted relative to /runner/project
             for subdir in ('project', 'artifacts'):
@@ -502,10 +493,13 @@ class BaseConfig(object):
                     os.mkdir(subdir_path, 0o700)
 
             # runtime commands need artifacts mounted to output data
-            self._update_volume_mount_paths(new_args,
-                                            "{}/artifacts".format(self.private_data_dir),
-                                            dst_mount_path="/runner/artifacts",
-                                            labels=":Z")
+            self._update_volume_mount_paths(
+                new_args,
+                f"{self.private_data_dir}/artifacts",
+                dst_mount_path="/runner/artifacts",
+                labels=":Z",
+            )
+
 
         else:
             subdir_path = os.path.join(self.private_data_dir, 'artifacts')
@@ -514,16 +508,22 @@ class BaseConfig(object):
 
         # Mount the entire private_data_dir
         # custom show paths inside private_data_dir do not make sense
-        self._update_volume_mount_paths(new_args, "{}".format(self.private_data_dir), dst_mount_path="/runner", labels=":Z")
+        self._update_volume_mount_paths(
+            new_args,
+            f"{self.private_data_dir}",
+            dst_mount_path="/runner",
+            labels=":Z",
+        )
+
 
         if self.container_auth_data:
             # Pull in the necessary registry auth info, if there is a container cred
             self.registry_auth_path, registry_auth_conf_file = self._generate_container_auth_dir(self.container_auth_data)
             if 'podman' in self.process_isolation_executable:
-                new_args.extend(["--authfile={}".format(self.registry_auth_path)])
+                new_args.extend([f"--authfile={self.registry_auth_path}"])
             else:
                 docker_idx = new_args.index(self.process_isolation_executable)
-                new_args.insert(docker_idx + 1, "--config={}".format(self.registry_auth_path))
+                new_args.insert(docker_idx + 1, f"--config={self.registry_auth_path}")
             if registry_auth_conf_file is not None:
                 # Podman >= 3.1.0
                 self.env['CONTAINERS_REGISTRIES_CONF'] = registry_auth_conf_file
@@ -536,7 +536,7 @@ class BaseConfig(object):
                 self._ensure_path_safe_to_mount(volume_mounts[0])
                 labels = None
                 if len(volume_mounts) == 3:
-                    labels = ":%s" % volume_mounts[2]
+                    labels = f":{volume_mounts[2]}"
                 self._update_volume_mount_paths(new_args, volume_mounts[0], dst_mount_path=volume_mounts[1], labels=labels)
 
         # Reference the file with list of keys to pass into container

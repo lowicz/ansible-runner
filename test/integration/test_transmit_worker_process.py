@@ -140,9 +140,7 @@ class TestStreamingUsage:
             # In real AWX implementation, worker is done via receptorctl
             executor.submit(worker_method, transmit_socket_read.makefile('rb'), results_socket_write.makefile('wb'))
 
-            while True:
-                if transmit_future.done():
-                    break
+            while True and not transmit_future.done():
                 time.sleep(0.05)  # additionally, AWX calls cancel_callback()
 
             res = transmit_future.result()
@@ -151,9 +149,7 @@ class TestStreamingUsage:
 
             process_future = executor.submit(process_method, results_socket_read.makefile('rb'))
 
-            while True:
-                if process_future.done():
-                    break
+            while True and not process_future.done():
                 time.sleep(0.05)  # additionally, AWX calls cancel_callback()
 
         for s in (transmit_socket_write, transmit_socket_read, results_socket_write, results_socket_read):

@@ -29,14 +29,12 @@ def executor(tmp_path, request):
 
     inventory = 'localhost ansible_connection=local ansible_python_interpreter="{{ ansible_playbook_python }}"'
 
-    r = init_runner(
+    return init_runner(
         private_data_dir=private_data_dir,
         inventory=inventory,
         envvars=envvars,
-        playbook=yaml.safe_load(playbook)
+        playbook=yaml.safe_load(playbook),
     )
-
-    return r
 
 
 @pytest.mark.parametrize('event', ['playbook_on_start',
@@ -247,7 +245,10 @@ def test_callback_plugin_censoring_does_not_overwrite(executor, playbook):
     # task 1
     assert events[2]['event'] == 'playbook_on_task_start'
     # Ordering of task and item events may differ randomly
-    assert set(['runner_on_start', 'runner_item_on_ok', 'runner_on_ok']) == set([data['event'] for data in events[3:6]])
+    assert {'runner_on_start', 'runner_item_on_ok', 'runner_on_ok'} == {
+        data['event'] for data in events[3:6]
+    }
+
 
     # task 2 no_log=True
     assert events[6]['event'] == 'playbook_on_task_start'

@@ -102,7 +102,7 @@ class CommandConfig(BaseConfig):
             self.command = [self.executable_cmd]
 
         if self.execution_mode == BaseExecutionMode.GENERIC_COMMANDS \
-           and 'python' in self.executable_cmd.split(os.pathsep)[-1] and self.cmdline_args is None:
+               and 'python' in self.executable_cmd.split(os.pathsep)[-1] and self.cmdline_args is None:
             raise ConfigurationError("Runner requires python filename for execution")
         elif self.execution_mode == BaseExecutionMode.NONE:
             raise ConfigurationError("No executable for runner to run")

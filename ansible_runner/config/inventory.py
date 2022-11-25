@@ -44,7 +44,7 @@ class InventoryConfig(BaseConfig):
 
     def __init__(self, runner_mode=None, **kwargs):
         # runner params
-        self.runner_mode = runner_mode if runner_mode else 'subprocess'
+        self.runner_mode = runner_mode or 'subprocess'
         if self.runner_mode not in ['pexpect', 'subprocess']:
             raise ConfigurationError("Invalid runner mode {0}, valid value is either 'pexpect' or 'subprocess'".format(self.runner_mode))
 
@@ -80,9 +80,8 @@ class InventoryConfig(BaseConfig):
             raise ConfigurationError("'graph' action supports only 'json' response format")
 
         self._prepare_env(runner_mode=self.runner_mode)
-        self.cmdline_args = []
+        self.cmdline_args = ['--{0}'.format(action)]
 
-        self.cmdline_args.append('--{0}'.format(action))
         if action == 'host':
             self.cmdline_args.append(host)
 

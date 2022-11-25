@@ -17,7 +17,7 @@ def write_encoded_event_data(fileobj, data):
     fileobj.write(u'\x1b[K')
     for offset in xrange(0, len(b64data), MAX_WIDTH):
         chunk = b64data[offset:offset + MAX_WIDTH]
-        escaped_chunk = u'{}\x1b[{}D'.format(chunk, len(chunk))
+        escaped_chunk = f'{chunk}\x1b[{len(chunk)}D'
         fileobj.write(escaped_chunk)
     fileobj.write(u'\x1b[K')
 
@@ -52,7 +52,7 @@ def job_event_callback(fake_callback, fake_cache):
 
 def test_event_recomb(fake_callback, fake_cache, wrapped_handle):
     # Pretend that this is done by the Ansible callback module
-    fake_cache[':1:ev-{}'.format(EXAMPLE_UUID)] = {'event': 'foo'}
+    fake_cache[f':1:ev-{EXAMPLE_UUID}'] = {'event': 'foo'}
     write_encoded_event_data(wrapped_handle, {
         'uuid': EXAMPLE_UUID
     })
@@ -84,7 +84,7 @@ def test_separate_verbose_events(fake_callback, wrapped_handle):
 
 def test_large_data_payload(fake_callback, fake_cache, wrapped_handle):
     # Pretend that this is done by the Ansible callback module
-    fake_cache[':1:ev-{}'.format(EXAMPLE_UUID)] = {'event': 'foo'}
+    fake_cache[f':1:ev-{EXAMPLE_UUID}'] = {'event': 'foo'}
     event_data_to_encode = {
         'uuid': EXAMPLE_UUID,
         'host': 'localhost',
@@ -107,7 +107,7 @@ def test_large_data_payload(fake_callback, fake_cache, wrapped_handle):
 
 def test_event_lazy_parsing(fake_callback, fake_cache, wrapped_handle):
     # Pretend that this is done by the Ansible callback module
-    fake_cache[':1:ev-{}'.format(EXAMPLE_UUID)] = {'event': 'foo'}
+    fake_cache[f':1:ev-{EXAMPLE_UUID}'] = {'event': 'foo'}
     buff = StringIO()
     event_data_to_encode = {
         'uuid': EXAMPLE_UUID,

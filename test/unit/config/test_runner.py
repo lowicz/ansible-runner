@@ -23,9 +23,8 @@ except AttributeError:
 
 
 def load_file_side_effect(path, value=None, *args, **kwargs):
-    if args[0] == path:
-        if value:
-            return value
+    if args[0] == path and value:
+        return value
     raise ConfigurationError
 
 
@@ -40,7 +39,7 @@ def test_runner_config_init_defaults(mocker):
     assert rc.limit is None
     assert rc.module is None
     assert rc.module_args is None
-    assert rc.artifact_dir == os.path.join('/artifacts/%s' % rc.ident)
+    assert rc.artifact_dir == os.path.join(f'/artifacts/{rc.ident}')
     assert isinstance(rc.loader, ArtifactLoader)
 
 
@@ -579,9 +578,7 @@ def test_bwrap_process_isolation_defaults(mocker):
 def test_bwrap_process_isolation_and_directory_isolation(mocker, patch_private_data_dir, tmp_path):
 
     def mock_exists(path):
-        if path == "/project":
-            return False
-        return True
+        return path != "/project"
 
     class MockArtifactLoader:
         def __init__(self, base_path):
@@ -663,7 +660,7 @@ def test_process_isolation_settings(mocker, tmp_path):
         '--symlink', 'usr/lib64', '/lib64',
     ]
     index = len(expected)
-    assert rc.command[0:index] == expected
+    assert rc.command[:index] == expected
 
     # hide /home
     assert rc.command[index] == '--bind'
@@ -704,7 +701,7 @@ def test_container_volume_mounting_with_Z(mocker, tmp_path):
             if mount.endswith(':/tmp/project_path/:Z'):
                 break
     else:
-        raise Exception('Could not find expected mount, args: {}'.format(new_args))
+        raise Exception(f'Could not find expected mount, args: {new_args}')
 
 
 @pytest.mark.test_all_runtimes
@@ -734,7 +731,7 @@ def test_containerization_settings(tmp_path, runtime, mocker):
 
     # validate ANSIBLE_CALLBACK_PLUGINS contains callback plugin dir
     callback_plugins = rc.env['ANSIBLE_CALLBACK_PLUGINS'].split(':')
-    callback_dir = os.path.join("/runner/artifacts", "{}".format(rc.ident), "callback")
+    callback_dir = os.path.join("/runner/artifacts", f"{rc.ident}", "callback")
     assert callback_dir in callback_plugins
 
     extra_container_args = []
@@ -743,12 +740,41 @@ def test_containerization_settings(tmp_path, runtime, mocker):
     else:
         extra_container_args = [f'--user={os.getuid()}']
 
-    expected_command_start = [runtime, 'run', '--rm', '--tty', '--interactive', '--workdir', '/runner/project'] + \
-        ['-v', '{}/:/runner/:Z'.format(rc.private_data_dir)] + \
-        ['-v', '/host1/:/container1/', '-v', '/host2/:/container2/'] + \
-        ['--env-file', '{}/env.list'.format(rc.artifact_dir)] + \
-        extra_container_args + \
-        ['--name', 'ansible_runner_foo'] + \
-        ['my_container', 'ansible-playbook', '-i', '/runner/inventory/hosts', 'main.yaml']
+    expected_command_start = (
+        (
+            (
+                (
+                    (
+                        [
+                            runtime,
+                            'run',
+                            '--rm',
+                            '--tty',
+                            '--interactive',
+                            '--workdir',
+                            '/runner/project',
+                        ]
+                        + ['-v', f'{rc.private_data_dir}/:/runner/:Z']
+                    )
+                    + [
+                        '-v',
+                        '/host1/:/container1/',
+                        '-v',
+                        '/host2/:/container2/',
+                    ]
+                )
+                + ['--env-file', f'{rc.artifact_dir}/env.list']
+            )
+            + extra_container_args
+        )
+        + ['--name', 'ansible_runner_foo']
+    ) + [
+        'my_container',
+        'ansible-playbook',
+        '-i',
+        '/runner/inventory/hosts',
+        'main.yaml',
+    ]
+
 
     assert expected_command_start == rc.command

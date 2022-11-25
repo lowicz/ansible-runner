@@ -13,30 +13,24 @@ def get_cpu_count():
 
 def get_mem_in_bytes():
     try:
-        with open('/proc/meminfo') as f:
-            mem = f.read()
-        matched = re.search(r'^MemTotal:\s+(\d+)', mem)
-        if matched:
+        mem = Path('/proc/meminfo').read_text()
+        if matched := re.search(r'^MemTotal:\s+(\d+)', mem):
             mem_capacity = int(matched.groups()[0])
         return mem_capacity * 1024
     except FileNotFoundError:
-        error = "The /proc/meminfo file could not found, memory capacity undiscoverable."
-        return error
+        return "The /proc/meminfo file could not found, memory capacity undiscoverable."
 
 
 def ensure_uuid(uuid_file_path=None, mode=0o0600):
     if uuid_file_path is None:
         uuid_file_path = Path.home().joinpath('.ansible_runner_uuid')
 
-    if uuid_file_path.exists():
-        uuid_file_path.chmod(mode)
-        # Read the contents of file if it already exists
-        saved_uuid = uuid_file_path.read_text()
-        return saved_uuid.strip()
-    else:
-        # Generate a new UUID if file is not found
-        newly_generated_uuid = _set_uuid(uuid_file_path, mode)
-        return newly_generated_uuid
+    if not uuid_file_path.exists():
+        return _set_uuid(uuid_file_path, mode)
+    uuid_file_path.chmod(mode)
+    # Read the contents of file if it already exists
+    saved_uuid = uuid_file_path.read_text()
+    return saved_uuid.strip()
 
 
 def _set_uuid(uuid_file_path=None, mode=0o0600):

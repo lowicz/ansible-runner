@@ -97,8 +97,7 @@ def delete_associated_folders(dir):
     for ident in project_idents(dir):
         registry_auth_pattern = f'{gettempdir()}/{registry_auth_prefix}{ident}_*'
         for dir in glob.glob(registry_auth_pattern):
-            changed = cleanup_folder(dir)
-            if changed:
+            if changed := cleanup_folder(dir):
                 print(f'Removed associated registry auth dir {dir}')
 
 
@@ -109,8 +108,11 @@ def validate_pattern(pattern):
         '/run', '/sys', '/usr', '/boot', '/etc', '/opt', '/sbin', gettempdir(), '/var'
     )
     prohibited_paths = {Path(s) for s in paths}.union(Path(s).resolve() for s in paths)
-    bad_paths = [dir for dir in glob.glob(pattern) if Path(dir).resolve() in prohibited_paths]
-    if bad_paths:
+    if bad_paths := [
+        dir
+        for dir in glob.glob(pattern)
+        if Path(dir).resolve() in prohibited_paths
+    ]:
         raise RuntimeError(
             f'Provided pattern could result in deleting system folders:\n{" ".join(bad_paths)}\n'
             'Refusing to continue for user system safety.'
@@ -159,9 +161,7 @@ def cleanup_images(images, runtime='podman'):
 def prune_images(runtime='podman'):
     """Run the prune images command and return changed status"""
     stdout = run_command([runtime, 'image', 'prune', '-f'])
-    if not stdout or stdout == "Total reclaimed space: 0B":
-        return False
-    return True
+    return bool(stdout and stdout != "Total reclaimed space: 0B")
 
 
 def run_cleanup(vargs):

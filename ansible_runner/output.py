@@ -34,9 +34,8 @@ def display(msg, log_only=False):
 
 def debug(msg):
     if DEBUG_ENABLED:
-        if isinstance(msg, Exception):
-            if TRACEBACK_ENABLED:
-                _debug_logger.exception(msg)
+        if isinstance(msg, Exception) and TRACEBACK_ENABLED:
+            _debug_logger.exception(msg)
         display(msg)
 
 
@@ -53,14 +52,14 @@ def set_logfile(filename):
 def set_debug(value):
     global DEBUG_ENABLED
     if value.lower() not in ('enable', 'disable'):
-        raise ValueError('value must be one of `enable` or `disable`, got %s' % value)
+        raise ValueError(f'value must be one of `enable` or `disable`, got {value}')
     DEBUG_ENABLED = value.lower() == 'enable'
 
 
 def set_traceback(value):
     global TRACEBACK_ENABLED
     if value.lower() not in ('enable', 'disable'):
-        raise ValueError('value must be one of `enable` or `disable`, got %s' % value)
+        raise ValueError(f'value must be one of `enable` or `disable`, got {value}')
     TRACEBACK_ENABLED = value.lower() == 'enable'
 
 

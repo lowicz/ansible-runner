@@ -155,7 +155,7 @@ def test_run_command_events_missing(rc):
     status, exitcode = runner.run()
     assert status == 'successful'
     assert exitcode == 0
-    assert list(runner.events) == []
+    assert not list(runner.events)
 
 
 def test_run_command_stdout_missing(rc):
