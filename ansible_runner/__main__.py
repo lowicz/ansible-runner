@@ -60,55 +60,59 @@ DEFAULT_CLI_ARGS = {
             ('private_data_dir',),
             dict(
                 help="base directory containing the ansible-runner metadata "
-                     "(project, inventory, env, etc)"
+                "(project, inventory, env, etc)"
             ),
         ),
     ),
     "generic_args": (
         (
             ('--version',),
-            dict(
-                action='version',
-                version=VERSION
-            ),
+            dict(action='version', version=VERSION),
         ),
         (
             ("--debug",),
             dict(
                 action="store_true",
-                help="enable ansible-runner debug output logging (default=False)"
+                help="enable ansible-runner debug output logging (default=False)",
             ),
         ),
         (
             ("--logfile",),
-            dict(
-                help="log output messages to a file (default=None)"
-            ),
+            dict(help="log output messages to a file (default=None)"),
         ),
     ),
     "mutually_exclusive_group": (
         (
-            ("-p", "--playbook",),
+            (
+                "-p",
+                "--playbook",
+            ),
             dict(
                 default=DEFAULT_RUNNER_PLAYBOOK,
                 help="invoke an Ansible playbook from the ansible-runner project "
-                     "(See Ansible Playbook Options below)"
+                "(See Ansible Playbook Options below)",
             ),
         ),
         (
-            ("-m", "--module",),
+            (
+                "-m",
+                "--module",
+            ),
             dict(
                 default=DEFAULT_RUNNER_MODULE,
                 help="invoke an Ansible module directly without a playbook "
-                     "(See Ansible Module Options below)"
+                "(See Ansible Module Options below)",
             ),
         ),
         (
-            ("-r", "--role",),
+            (
+                "-r",
+                "--role",
+            ),
             dict(
                 default=DEFAULT_RUNNER_ROLE,
                 help="invoke an Ansible role directly without a playbook "
-                     "(See Ansible Role Options below)"
+                "(See Ansible Role Options below)",
             ),
         ),
     ),
@@ -117,48 +121,50 @@ DEFAULT_CLI_ARGS = {
             ("--limit",),
             dict(
                 help="matches Ansible's ```--limit``` parameter to further constrain "
-                     "the inventory to be used (default=None)"
+                "the inventory to be used (default=None)"
             ),
         ),
         (
             ("--cmdline",),
             dict(
                 help="command line options to pass to ansible-playbook at "
-                     "execution time (default=None)"
+                "execution time (default=None)"
             ),
         ),
         (
             ("--hosts",),
             dict(
                 help="define the set of hosts to execute against (default=None) "
-                     "Note: this parameter only works with -m or -r"
+                "Note: this parameter only works with -m or -r"
             ),
         ),
         (
             ("--forks",),
             dict(
                 help="matches Ansible's ```--forks``` parameter to set the number "
-                     "of concurrent processes (default=None)"
+                "of concurrent processes (default=None)"
             ),
         ),
     ),
     "runner_group": (
-        # ansible-runner options
         (
-            ("-b", "--binary",),
+            (
+                "-b",
+                "--binary",
+            ),
             dict(
                 default=DEFAULT_RUNNER_BINARY,
-                help="specifies the full path pointing to the Ansible binaries "
-                     "(default={})".format(DEFAULT_RUNNER_BINARY)
+                help=f"specifies the full path pointing to the Ansible binaries (default={DEFAULT_RUNNER_BINARY})",
             ),
         ),
         (
-            ("-i", "--ident",),
+            (
+                "-i",
+                "--ident",
+            ),
             dict(
                 default=DEFAULT_UUID,
-                help="an identifier that will be used when generating the artifacts "
-                     "directory and can be used to uniquely identify a playbook run "
-                     "(default={})".format(DEFAULT_UUID)
+                help=f"an identifier that will be used when generating the artifacts directory and can be used to uniquely identify a playbook run (default={DEFAULT_UUID})",
             ),
         ),
         (
@@ -167,36 +173,39 @@ DEFAULT_CLI_ARGS = {
                 default=0,
                 type=int,
                 help="automatically clean up old artifact directories after a given "
-                     "number have been created (default=0, disabled)"
+                "number have been created (default=0, disabled)",
             ),
         ),
         (
             ("--artifact-dir",),
             dict(
                 help="optional path for the artifact root directory "
-                     "(default=<private_data_dir>/artifacts)"
+                "(default=<private_data_dir>/artifacts)"
             ),
         ),
         (
             ("--project-dir",),
             dict(
                 help="optional path for the location of the playbook content directory "
-                     "(default=<private_data_dir/project)"
+                "(default=<private_data_dir/project)"
             ),
         ),
         (
             ("--inventory",),
             dict(
                 help="optional path for the location of the inventory content directory "
-                     "(default=<private_data_dir>/inventory)"
+                "(default=<private_data_dir>/inventory)"
             ),
         ),
         (
-            ("-j", "--json",),
+            (
+                "-j",
+                "--json",
+            ),
             dict(
                 action="store_true",
                 help="output the JSON event structure to stdout instead of "
-                     "Ansible output (default=False)"
+                "Ansible output (default=False)",
             ),
         ),
         (
@@ -204,8 +213,8 @@ DEFAULT_CLI_ARGS = {
             dict(
                 action="store_true",
                 help="Omits including extra event data in the callback payloads "
-                     "or the Runner payload data files "
-                     "(status and stdout still included)"
+                "or the Runner payload data files "
+                "(status and stdout still included)",
             ),
         ),
         (
@@ -213,8 +222,8 @@ DEFAULT_CLI_ARGS = {
             dict(
                 action="store_true",
                 help="Only adds extra event data for failed tasks in the callback "
-                     "payloads or the Runner payload data files "
-                     "(status and stdout still included for other events)"
+                "payloads or the Runner payload data files "
+                "(status and stdout still included for other events)",
             ),
         ),
         (
@@ -222,14 +231,17 @@ DEFAULT_CLI_ARGS = {
             dict(
                 action="store_true",
                 dest='suppress_env_files',
-                help="Add flag to prevent the writing of the env directory"
+                help="Add flag to prevent the writing of the env directory",
             ),
         ),
         (
-            ("-q", "--quiet",),
+            (
+                "-q",
+                "--quiet",
+            ),
             dict(
                 action="store_true",
-                help="disable all messages sent to stdout/stderr (default=False)"
+                help="disable all messages sent to stdout/stderr (default=False)",
             ),
         ),
         (
@@ -237,7 +249,7 @@ DEFAULT_CLI_ARGS = {
             dict(
                 action="count",
                 help="increase the verbosity with multiple v's (up to 5) of the "
-                     "ansible-playbook output (default=None)"
+                "ansible-playbook output (default=None)",
             ),
         ),
     ),
@@ -246,14 +258,14 @@ DEFAULT_CLI_ARGS = {
             ("--roles-path",),
             dict(
                 default=DEFAULT_ROLES_PATH,
-                help="path used to locate the role to be executed (default=None)"
+                help="path used to locate the role to be executed (default=None)",
             ),
         ),
         (
             ("--role-vars",),
             dict(
                 help="set of variables to be passed to the role at run time in the "
-                     "form of 'key1=value1 key2=value2 keyN=valueN'(default=None)"
+                "form of 'key1=value1 key2=value2 keyN=valueN'(default=None)"
             ),
         ),
         (
@@ -261,9 +273,9 @@ DEFAULT_CLI_ARGS = {
             dict(
                 action="store_true",
                 default=False,
-                help="disable fact collection when the role is executed (default=False)"
+                help="disable fact collection when the role is executed (default=False)",
             ),
-        )
+        ),
     ),
     "playbook_group": (
         (
@@ -272,8 +284,8 @@ DEFAULT_CLI_ARGS = {
                 dest="process_isolation",
                 action="store_true",
                 help="Isolate execution. Two methods are supported: (1) using a container engine (e.g. podman or docker) "
-                     "to execute **Ansible**. (2) using a sandbox (e.g. bwrap) which will by default restrict access to /tmp "
-                     "(default=False)"
+                "to execute **Ansible**. (2) using a sandbox (e.g. bwrap) which will by default restrict access to /tmp "
+                "(default=False)",
             ),
         ),
         (
@@ -281,8 +293,8 @@ DEFAULT_CLI_ARGS = {
             dict(
                 dest="process_isolation_executable",
                 default="podman",
-                help="Process isolation executable or container engine used to isolate execution. (default=podman)"
-            )
+                help="Process isolation executable or container engine used to isolate execution. (default=podman)",
+            ),
         ),
         (
             ("--process-isolation-path",),
@@ -290,8 +302,8 @@ DEFAULT_CLI_ARGS = {
                 dest="process_isolation_path",
                 default="/tmp",
                 help="path that an isolated playbook run will use for staging. "
-                     "(default=/tmp)"
-            )
+                "(default=/tmp)",
+            ),
         ),
         (
             ("--process-isolation-hide-paths",),
@@ -299,8 +311,8 @@ DEFAULT_CLI_ARGS = {
                 dest="process_isolation_hide_paths",
                 nargs='*',
                 help="list of paths on the system that should be hidden from the "
-                     "playbook run (default=None)"
-            )
+                "playbook run (default=None)",
+            ),
         ),
         (
             ("--process-isolation-show-paths",),
@@ -308,8 +320,8 @@ DEFAULT_CLI_ARGS = {
                 dest="process_isolation_show_paths",
                 nargs='*',
                 help="list of paths on the system that should be exposed to the "
-                     "playbook run (default=None)"
-            )
+                "playbook run (default=None)",
+            ),
         ),
         (
             ("--process-isolation-ro-paths",),
@@ -317,27 +329,30 @@ DEFAULT_CLI_ARGS = {
                 dest="process_isolation_ro_paths",
                 nargs='*',
                 help="list of paths on the system that should be exposed to the "
-                     "playbook run as read-only (default=None)"
-            )
+                "playbook run as read-only (default=None)",
+            ),
         ),
         (
             ("--directory-isolation-base-path",),
             dict(
                 dest="directory_isolation_base_path",
                 help="copies the project directory to a location in this directory "
-                     "to prevent multiple simultaneous executions from conflicting "
-                     "(default=None)"
-            )
-        )
+                "to prevent multiple simultaneous executions from conflicting "
+                "(default=None)",
+            ),
+        ),
     ),
     "modules_group": (
         (
-            ("-a", "--args",),
+            (
+                "-a",
+                "--args",
+            ),
             dict(
                 dest='module_args',
                 help="set of arguments to be passed to the module at run time in the "
-                     "form of 'key1=value1 key2=value2 keyN=valueN'(default=None)"
-            )
+                "form of 'key1=value1 key2=value2 keyN=valueN'(default=None)",
+            ),
         ),
     ),
     "container_group": (
@@ -346,8 +361,8 @@ DEFAULT_CLI_ARGS = {
             dict(
                 dest="container_image",
                 default="quay.io/ansible/ansible-runner:devel",
-                help="Container image to use when running an ansible task"
-            )
+                help="Container image to use when running an ansible task",
+            ),
         ),
         (
             ("--container-volume-mount",),
@@ -355,8 +370,8 @@ DEFAULT_CLI_ARGS = {
                 dest="container_volume_mounts",
                 action='append',
                 help="Bind mounts (in the form 'host_dir:/container_dir)'. "
-                     "Can be used more than once to create multiple bind mounts."
-            )
+                "Can be used more than once to create multiple bind mounts.",
+            ),
         ),
         (
             ("--container-option",),
@@ -364,11 +379,12 @@ DEFAULT_CLI_ARGS = {
                 dest="container_options",
                 action='append',
                 help="Container options to pass to execution engine. "
-                     "Can be used more than once to send multiple options."
-            )
+                "Can be used more than once to send multiple options.",
+            ),
         ),
     ),
 }
+
 
 logger = logging.getLogger('ansible-runner')
 
@@ -433,25 +449,24 @@ def role_manager(vargs):
 
         playbook = dump_artifact(json.dumps(play), project_path, filename)
         kwargs.playbook = playbook
-        output.debug('using playbook file %s' % playbook)
+        output.debug(f'using playbook file {playbook}')
 
         if vargs.get('inventory'):
             inventory_file = os.path.join(vargs.get('private_data_dir'), 'inventory', vargs.get('inventory'))
             if not os.path.exists(inventory_file):
                 raise AnsibleRunnerException('location specified by --inventory does not exist')
             kwargs.inventory = inventory_file
-            output.debug('using inventory file %s' % inventory_file)
+            output.debug(f'using inventory file {inventory_file}')
 
         roles_path = vargs.get('roles_path') or os.path.join(vargs.get('private_data_dir'), 'roles')
         roles_path = os.path.abspath(roles_path)
-        output.debug('setting ANSIBLE_ROLES_PATH to %s' % roles_path)
+        output.debug(f'setting ANSIBLE_ROLES_PATH to {roles_path}')
 
         envvars = {}
         if envvars_exists:
             with open(envvars_path, 'rb') as f:
                 tmpvars = f.read()
-                new_envvars = safe_load(tmpvars)
-                if new_envvars:
+                if new_envvars := safe_load(tmpvars):
                     envvars = new_envvars
 
         envvars['ANSIBLE_ROLES_PATH'] = roles_path
@@ -768,16 +783,22 @@ def main(sys_args=None):
             vargs['private_data_dir'] = temp_private_dir
             register_for_cleanup(temp_private_dir)
 
-    if vargs.get('command') == 'process':
-        # the process command is the final destination of artifacts, user expects private_data_dir to not be cleaned up
-        if not vargs.get('private_data_dir'):
-            temp_private_dir = tempfile.mkdtemp()
-            vargs['private_data_dir'] = temp_private_dir
+    if vargs.get('command') == 'process' and not vargs.get('private_data_dir'):
+        temp_private_dir = tempfile.mkdtemp()
+        vargs['private_data_dir'] = temp_private_dir
 
     if vargs.get('command') in ('start', 'run', 'transmit'):
-        if vargs.get('hosts') and not (vargs.get('module') or vargs.get('role')):
+        if (
+            vargs.get('hosts')
+            and not vargs.get('module')
+            and not vargs.get('role')
+        ):
             parser.exit(status=1, message="The --hosts option can only be used with -m or -r\n")
-        if not (vargs.get('module') or vargs.get('role')) and not vargs.get('playbook'):
+        if (
+            not vargs.get('module')
+            and not vargs.get('role')
+            and not vargs.get('playbook')
+        ):
             parser.exit(status=1, message="The -p option must be specified when not using -m or -r\n")
 
     output.configure()
@@ -799,9 +820,9 @@ def main(sys_args=None):
     try:
         os.makedirs(vargs.get('private_data_dir'), mode=0o700)
     except OSError as exc:
-        if exc.errno == errno.EEXIST and os.path.isdir(vargs.get('private_data_dir')):
-            pass
-        else:
+        if exc.errno != errno.EEXIST or not os.path.isdir(
+            vargs.get('private_data_dir')
+        ):
             raise
 
     stderr_path = None

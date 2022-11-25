@@ -82,11 +82,10 @@ class Worker(object):
         self.rc = None
 
     def update_paths(self, kwargs):
-        if kwargs.get('envvars'):
-            if 'ANSIBLE_ROLES_PATH' in kwargs['envvars']:
-                roles_path = kwargs['envvars']['ANSIBLE_ROLES_PATH']
-                roles_dir = os.path.join(self.private_data_dir, 'roles')
-                kwargs['envvars']['ANSIBLE_ROLES_PATH'] = os.path.join(roles_dir, roles_path)
+        if kwargs.get('envvars') and 'ANSIBLE_ROLES_PATH' in kwargs['envvars']:
+            roles_path = kwargs['envvars']['ANSIBLE_ROLES_PATH']
+            roles_dir = os.path.join(self.private_data_dir, 'roles')
+            kwargs['envvars']['ANSIBLE_ROLES_PATH'] = os.path.join(roles_dir, roles_path)
         if kwargs.get('inventory'):
             kwargs['inventory'] = os.path.join(self.private_data_dir, kwargs['inventory'])
 
@@ -183,7 +182,7 @@ class Processor(object):
         else:
             project_artifacts = os.path.abspath(os.path.join(self.private_data_dir, 'artifacts'))
             if kwargs.get('ident'):
-                self.artifact_dir = os.path.join(project_artifacts, "{}".format(kwargs.get('ident')))
+                self.artifact_dir = os.path.join(project_artifacts, f"{kwargs.get('ident')}")
             else:
                 self.artifact_dir = project_artifacts
 
@@ -210,10 +209,12 @@ class Processor(object):
             self.status_handler(status_data, runner_config=self.config)
 
     def event_callback(self, event_data):
-        full_filename = os.path.join(self.artifact_dir,
-                                     'job_events',
-                                     '{}-{}.json'.format(event_data['counter'],
-                                                         event_data['uuid']))
+        full_filename = os.path.join(
+            self.artifact_dir,
+            'job_events',
+            f"{event_data['counter']}-{event_data['uuid']}.json",
+        )
+
         if not self.quiet and 'stdout' in event_data:
             print(event_data['stdout'])
 

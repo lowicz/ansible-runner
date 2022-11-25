@@ -55,14 +55,16 @@ class Runner(object):
         '''
         self.last_stdout_update = time.time()
         if 'uuid' in event_data:
-            filename = '{}-partial.json'.format(event_data['uuid'])
+            filename = f"{event_data['uuid']}-partial.json"
             partial_filename = os.path.join(self.config.artifact_dir,
                                             'job_events',
                                             filename)
-            full_filename = os.path.join(self.config.artifact_dir,
-                                         'job_events',
-                                         '{}-{}.json'.format(event_data['counter'],
-                                                             event_data['uuid']))
+            full_filename = os.path.join(
+                self.config.artifact_dir,
+                'job_events',
+                f"{event_data['counter']}-{event_data['uuid']}.json",
+            )
+
             try:
                 event_data.update(dict(runner_ident=str(self.config.ident)))
                 try:
@@ -72,8 +74,8 @@ class Runner(object):
                     if self.remove_partials:
                         os.remove(partial_filename)
                 except IOError as e:
-                    msg = "Failed to open ansible stdout callback plugin partial data" \
-                          " file {} with error {}".format(partial_filename, str(e))
+                    msg = f"Failed to open ansible stdout callback plugin partial data file {partial_filename} with error {str(e)}"
+
                     debug(msg)
                     if self.config.check_job_event_data:
                         raise AnsibleRunnerException(msg)
@@ -89,19 +91,24 @@ class Runner(object):
                 for plugin in ansible_runner.plugins:
                     ansible_runner.plugins[plugin].event_handler(self.config, event_data)
                 if should_write:
-                    temporary_filename = full_filename + '.tmp'
+                    temporary_filename = f'{full_filename}.tmp'
                     with codecs.open(temporary_filename, 'w', encoding='utf-8') as write_file:
                         os.chmod(temporary_filename, stat.S_IRUSR | stat.S_IWUSR)
                         json.dump(event_data, write_file)
                     os.rename(temporary_filename, full_filename)
             except IOError as e:
-                debug("Failed writing event data: {}".format(e))
+                debug(f"Failed writing event data: {e}")
 
     def status_callback(self, status):
         self.status = status
         status_data = {'status': status, 'runner_ident': str(self.config.ident)}
         if status == 'starting':
-            status_data.update({'command': self.config.command, 'env': self.config.env, 'cwd': self.config.cwd})
+            status_data |= {
+                'command': self.config.command,
+                'env': self.config.env,
+                'cwd': self.config.cwd,
+            }
+
         for plugin in ansible_runner.plugins:
             ansible_runner.plugins[plugin].status_handler(self.config, status_data)
         if self.status_handler is not None:
@@ -121,9 +128,9 @@ class Runner(object):
         try:
             os.makedirs(self.config.artifact_dir, mode=0o700)
         except OSError as exc:
-            if exc.errno == errno.EEXIST and os.path.isdir(self.config.artifact_dir):
-                pass
-            else:
+            if exc.errno != errno.EEXIST or not os.path.isdir(
+                self.config.artifact_dir
+            ):
                 raise
 
         job_events_path = os.path.join(self.config.artifact_dir, 'job_events')
@@ -236,7 +243,7 @@ class Runner(object):
                     'universal_newlines': True,
                 }
                 if subprocess_timeout is not None:
-                    kwargs.update({'timeout': subprocess_timeout})
+                    kwargs['timeout'] = subprocess_timeout
 
                 proc_out = run_subprocess(command, **kwargs)
 
@@ -339,7 +346,7 @@ class Runner(object):
             stdout_handle.flush()
             stdout_handle.close()
             child.close()
-            self.rc = child.exitstatus if not (self.timed_out or self.canceled) else 254
+            self.rc = 254 if (self.timed_out or self.canceled) else child.exitstatus
 
         if self.canceled:
             self.status_callback('canceled')
@@ -460,7 +467,7 @@ class Runner(object):
             time.sleep(0.05)
             wait_time = datetime.datetime.now() - now
             if wait_time.total_seconds() > 60:
-                raise AnsibleRunnerException("events directory is missing: %s" % event_path)
+                raise AnsibleRunnerException(f"events directory is missing: {event_path}")
 
         while self.status == "running":
             for event, old_evnts in collect_new_events(event_path, old_events):
@@ -498,24 +505,29 @@ class Runner(object):
         '''
         Given a host name, this will return all task events executed on that host
         '''
-        all_host_events = filter(lambda x: 'event_data' in x and 'host' in x['event_data'] and x['event_data']['host'] == host,
-                                 self.events)
-        return all_host_events
+        return filter(
+            lambda x: 'event_data' in x
+            and 'host' in x['event_data']
+            and x['event_data']['host'] == host,
+            self.events,
+        )
 
     def kill_container(self):
         '''
         Internal method to terminate a container being used for job isolation
         '''
-        container_name = self.config.container_name
-        if container_name:
+        if container_name := self.config.container_name:
             container_cli = self.config.process_isolation_executable
             cmd = [container_cli, 'kill', container_name]
             proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
             _, stderr = proc.communicate()
             if proc.returncode:
-                logger.info('Error from {} kill {} command:\n{}'.format(container_cli, container_name, stderr))
+                logger.info(
+                    f'Error from {container_cli} kill {container_name} command:\n{stderr}'
+                )
+
             else:
-                logger.info("Killed container {}".format(container_name))
+                logger.info(f"Killed container {container_name}")
 
     @classmethod
     def handle_termination(cls, pid, pidfile=None, is_cancel=True):
@@ -531,7 +543,7 @@ class Runner(object):
         try:
             pgroup = os.getpgid(pid)
             os.killpg(pgroup, signal.SIGKILL)
-        except (OSError, ProcessLookupError):
+        except OSError:
             pass
         try:
             os.remove(pidfile)

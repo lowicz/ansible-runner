@@ -49,9 +49,7 @@ def _to_bytes(data):
     :returns: ``data`` converted to bytes
     :rtype: bytes
     """
-    if isinstance(data, bytes):
-        return data
-    return data.encode("utf-8")
+    return data if isinstance(data, bytes) else data.encode("utf-8")
 
 
 class Base64IO(io.IOBase):
@@ -86,8 +84,9 @@ class Base64IO(io.IOBase):
         required_attrs = ("read", "write", "close", "closed", "flush")
         if not all(hasattr(wrapped, attr) for attr in required_attrs):
             raise TypeError(
-                "Base64IO wrapped object must have attributes: %s" % (repr(sorted(required_attrs)),)
+                f"Base64IO wrapped object must have attributes: {repr(sorted(required_attrs))}"
             )
+
         super(Base64IO, self).__init__()
         self.__wrapped = wrapped
         self.__read_buffer = b""
@@ -272,7 +271,7 @@ class Base64IO(io.IOBase):
         # Remove whitespace from read data and attempt to read more data to get the desired
         # number of bytes.
 
-        if any([char in data for char in string.whitespace.encode("utf-8")]):
+        if any(char in data for char in string.whitespace.encode("utf-8")):
             data = self._read_additional_data_removing_whitespace(data, _bytes_to_read)
 
         results = io.BytesIO()
@@ -338,7 +337,6 @@ class Base64IO(io.IOBase):
     def __next__(self):
         # type: () -> bytes
         """Python 3 iterator hook."""
-        line = self.readline()
-        if line:
+        if line := self.readline():
             return line
         raise StopIteration()

@@ -41,10 +41,7 @@ def stream_dir(source_directory, stream):
         zip_size = Path(tmp.name).stat().st_size
 
         with open(tmp.name, "rb") as source:
-            if stream.name == "<stdout>":
-                target = sys.stdout.buffer
-            else:
-                target = stream
+            target = sys.stdout.buffer if stream.name == "<stdout>" else stream
             target.write(json.dumps({"zipfile": zip_size}).encode("utf-8") + b"\n")
             with Base64IO(target) as encoded_target:
                 for line in source:

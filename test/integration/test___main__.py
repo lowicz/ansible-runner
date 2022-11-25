@@ -16,19 +16,18 @@ def random_string():
 
 
 def random_json(keys=None):
-    data = dict()
+    data = {}
     if keys:
         for key in keys:
             data[key] = random_string()
     else:
-        for _ in range(0, 5):
+        for _ in range(5):
             data[random_string()] = random_string()
     return json.dumps(data)
 
 
 def cmdline(command, *args):
-    cmdline = ['ansible-runner', command]
-    cmdline.extend(args)
+    cmdline = ['ansible-runner', command, *args]
     sys.argv = cmdline
 
 

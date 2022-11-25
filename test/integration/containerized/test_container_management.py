@@ -14,7 +14,7 @@ from ansible_runner.interface import run
 def is_running(cli, runtime, container_name):
     cmd = [runtime, 'ps', '-aq', '--filter', f'name={container_name}']
     r = cli(cmd, bare=True)
-    output = '{}{}'.format(r.stdout, r.stderr)
+    output = f'{r.stdout}{r.stderr}'
     print(' '.join(cmd))
     print(output)
     return output.strip()

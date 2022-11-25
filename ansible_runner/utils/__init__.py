@@ -58,7 +58,7 @@ def is_dir_owner(directory):
     '''Returns True if current user is the owner of directory'''
     current_user = pwd.getpwuid(os.geteuid()).pw_name
     callback_owner = Path(directory).owner()
-    return bool(current_user == callback_owner)
+    return current_user == callback_owner
 
 
 class Bunch(object):
@@ -101,7 +101,7 @@ def isinventory(obj):
     Returns:
         boolean: True if the object is an inventory dict and False if it is not
     '''
-    return isinstance(obj, MutableMapping) or isinstance(obj, string_types)
+    return isinstance(obj, (MutableMapping, string_types))
 
 
 def check_isolation_executable_installed(isolation_executable):
@@ -113,7 +113,7 @@ def check_isolation_executable_installed(isolation_executable):
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
         proc.communicate()
-        return bool(proc.returncode == 0)
+        return proc.returncode == 0
     except (OSError, ValueError) as e:
         if isinstance(e, ValueError) or getattr(e, 'errno', 1) != 2:  # ENOENT, no such file or directory
             raise RuntimeError(f'{isolation_executable} unavailable for unexpected reason.')
@@ -151,8 +151,7 @@ def dump_artifact(obj, path, filename=None):
 
     if os.path.exists(fn):
         c_sha1 = hashlib.sha1()
-        with open(fn) as f:
-            contents = f.read()
+        contents = Path(fn).read_text()
         c_sha1.update(contents.encode(encoding='UTF-8'))
 
     if not os.path.exists(fn) or p_sha1.hexdigest() != c_sha1.hexdigest():
@@ -214,12 +213,11 @@ def dump_artifacts(kwargs):
         if not roles_path:
             roles_path = os.path.join(private_data_dir, 'roles')
         else:
-            roles_path += ':{}'.format(os.path.join(private_data_dir, 'roles'))
+            roles_path += f":{os.path.join(private_data_dir, 'roles')}"
 
         kwargs['envvars']['ANSIBLE_ROLES_PATH'] = roles_path
 
-    playbook = kwargs.get('playbook')
-    if playbook:
+    if playbook := kwargs.get('playbook'):
         # Ensure the play is a list of dictionaries
         if isinstance(playbook, MutableMapping):
             playbook = [playbook]
@@ -258,11 +256,14 @@ def collect_new_events(event_path, old_events):
     Collect new events for the 'events' generator property
     '''
     dir_events = os.listdir(event_path)
-    dir_events_actual = []
-    for each_file in dir_events:
-        if re.match("^[0-9]+-.+json$", each_file):
-            if '-partial' not in each_file and each_file not in old_events.keys():
-                dir_events_actual.append(each_file)
+    dir_events_actual = [
+        each_file
+        for each_file in dir_events
+        if re.match("^[0-9]+-.+json$", each_file)
+        and '-partial' not in each_file
+        and each_file not in old_events.keys()
+    ]
+
     dir_events_actual.sort(key=lambda filenm: int(filenm.split("-", 1)[0]))
     for event_file in dir_events_actual:
         with codecs.open(os.path.join(event_path, event_file), 'r', encoding='utf-8') as event_file_actual:
@@ -345,10 +346,7 @@ class OutputEventFilter(object):
             if data and '\n' in data and self._current_event_data is None:
                 # emit events for all complete lines we know about
                 lines = self._buffer.getvalue().splitlines(True)  # keep ends
-                remainder = None
-                # if last line is not a complete line, then exclude it
-                if '\n' not in lines[-1]:
-                    remainder = lines.pop()
+                remainder = lines.pop() if '\n' not in lines[-1] else None
                 # emit all complete lines
                 for line in lines:
                     self._emit_event(line)
@@ -365,8 +363,7 @@ class OutputEventFilter(object):
                     self._buffer.write(remainder)
 
     def close(self):
-        value = self._buffer.getvalue()
-        if value:
+        if value := self._buffer.getvalue():
             self._emit_event(value)
             self._buffer = StringIO()
         self._event_callback(dict(event='EOF'))
@@ -382,7 +379,7 @@ class OutputEventFilter(object):
             event_data = dict(event='verbose')
             stdout_chunks = buffered_stdout.splitlines(True)
         else:
-            event_data = dict()
+            event_data = {}
             stdout_chunks = []
 
         for stdout_chunk in stdout_chunks:
@@ -469,19 +466,16 @@ def cli_mounts():
             'ENVS': ['SSH_AUTH_SOCK'],
             'PATHS': [
                 {
-                    'src': '{}/.ssh/'.format(os.environ['HOME']),
-                    'dest': '/home/runner/.ssh/'
+                    'src': f"{os.environ['HOME']}/.ssh/",
+                    'dest': '/home/runner/.ssh/',
                 },
-                {
-                    'src': '{}/.ssh/'.format(os.environ['HOME']),
-                    'dest': '/root/.ssh/'
-                },
+                {'src': f"{os.environ['HOME']}/.ssh/", 'dest': '/root/.ssh/'},
                 {
                     'src': '/etc/ssh/ssh_known_hosts',
-                    'dest': '/etc/ssh/ssh_known_hosts'
-                }
-            ]
-        },
+                    'dest': '/etc/ssh/ssh_known_hosts',
+                },
+            ],
+        }
     ]
 
 
